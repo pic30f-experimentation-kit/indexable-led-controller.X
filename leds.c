@@ -17,43 +17,44 @@ static LedsEmissionState state;
 static int resetCounter;
 
 static unsigned char *out;
-static int byteCounter;
+static unsigned char outValue;
+static int outValueByteCounter;
 
-#define MASK 0b10000000;
+#define MASK 0b10000000
 
 void ledsInitialize() {
     out = start;
-    byteCounter = 0;
+    outValueByteCounter = 0;
     state = RUN;
 }
 
 int ledsGetPWMDutyCycle() {
-    static unsigned char value;
     if (state == RESET) {
-        if (++resetCounter >= NUMBER_OF_RESET_BITS) {
+        resetCounter++;
+        if (resetCounter >= NUMBER_OF_RESET_BITS) {
             out = start;
-            byteCounter = 0;
+            outValueByteCounter = 0;
             state = RUN;
         }
         return PWM_DC_FOR_RESET;
     }
-    if (--byteCounter <= 0) {
-        byteCounter = 8;
-        value = *out;
-        if (++out > end) {
+    outValueByteCounter--;
+    if (outValueByteCounter <= 0) {
+        outValueByteCounter = 8;
+        outValue = *out++;
+        if (out > end) {
             state = RESET;
             resetCounter = 1;
             return 0;
         }
     }
 
-    unsigned char bitValue = value & MASK;
-    value <<= 1;
-
-    if (bitValue == 0) {
-        return PWM_DC_FOR_0;
+    if (outValue & MASK) {
+        outValue <<= 1;
+        return PWM_DC_FOR_1;
     }
-    return PWM_DC_FOR_1;
+    outValue <<= 1;
+    return PWM_DC_FOR_0;        
 }
 
 void ledsSetPosition(int position) {
