@@ -10,10 +10,14 @@ void __attribute__((interrupt, no_auto_psv)) _ADCInterrupt(void) {
     // Reset the interruption flag:
     IFS0bits.ADIF = 0;
 
-    // Averages all available input captures, to remove noise:
+    // Takes the first capture, ignoring all the others
     int capture = ADCBUF0;
+    
+    // If capture is different than previous capture,
     if (capture != previousCapture) {
+        // sends the new capture to the buffer to be processed,
         bufferWrite (&capturesBuffer, capture);
+        // and remember current capture.
         previousCapture = capture;
     }
 }

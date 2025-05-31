@@ -140,6 +140,8 @@ void leds_can_set_position_between_2_and_3() {
 // Uncomment the definition below.
 // Then, put a break point at first and last call, and use simulator's
 // stopwatch to measure the execution time.
+// A good solution should spend less than 3500 cycles executing the
+// complete for loop.
 // #define PERFORMANCE
 #ifdef PERFORMANCE
 void leds_have_good_performance() {

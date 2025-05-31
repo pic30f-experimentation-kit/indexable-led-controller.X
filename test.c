@@ -54,7 +54,7 @@ void testInitialize() {
 
 bool assertEquals(const char *testId, int expected, int actual) {
     if (actual != expected) {
-        printf("Test %s: expected is %d, but actual is %d", 
+        printf("Test %s: expected is %d, but actual is %d\r\n", 
                 testId, expected, actual);
         testsFailed++;
         return false;
