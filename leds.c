@@ -5,17 +5,79 @@
 
 static Display display;
 
+typedef enum {
+    RUN,
+    RESET
+} LedsEmissionState;
+
+static LedsEmissionState state;
+static unsigned char *firstPosition;
+static unsigned char *lastPosition;
+
+static unsigned char *position;
+static unsigned char mask;
+static int resetCounter;
+static int nn;
+
 void ledsInitialize() {
-    // TODO
+    firstPosition = &display[0].r;
+    lastPosition = &display[NUMBER_OF_PIXELS - 1].b;
+    position = firstPosition;
+    mask = 0b10000000;
+    state = RUN;
+    nn = 0;
 }
 
 int ledsGetPWMDutyCycle() {
-    // TODO
-    return 0;
+    if (state == RESET) {
+        resetCounter++;
+        if (resetCounter >= NUMBER_OF_RESET_BITS) {
+            position = firstPosition;
+            state = RUN;
+        }
+        return PWM_DC_FOR_RESET;
+    }
+
+    char value = *position & mask;
+    mask >>= 1;
+    if (mask == 0) {
+        position++;
+        if (position > lastPosition) {
+            resetCounter = 0;
+            state = RESET;
+        }
+        mask = 0b10000000;
+    }
+
+    if (value == 0) {
+        return PWM_DC_FOR_0;
+    }
+    return PWM_DC_FOR_1;
 }
 
 void ledsSetPosition(int position) {
-    // TODO
+    float interval = (float) position;
+    interval /= 4096;
+    interval *= NUMBER_OF_PIXELS - 1;
+
+    int digitA = (int) interval;
+    int digitB = digitA + 1;
+
+    interval -= digitA;
+    interval *= 255;
+
+    int weightB = (int) interval;
+    int weightA = 255 - weightB;
+
+    for(int n = 0; n < NUMBER_OF_PIXELS; n++) {
+        if (n == digitA) {
+            display[n].r = weightA;
+        } else if (n == digitB) {
+            display[n].r = weightB;
+        } else {
+            display[n].r = 0;
+        }
+    }
 }
 
 #ifdef TEST
