@@ -10,46 +10,47 @@ typedef enum {
     RESET
 } LedsEmissionState;
 
-static LedsEmissionState state;
-static unsigned char *firstPosition;
-static unsigned char *lastPosition;
+static unsigned char *start = (unsigned char*) &display;
+static unsigned char *end = (unsigned char*) &display[NUMBER_OF_PIXELS];
 
-static unsigned char *position;
-static unsigned char mask;
+static LedsEmissionState state;
 static int resetCounter;
-static int nn;
+
+static unsigned char *out;
+static int byteCounter;
+
+#define MASK 0b10000000;
 
 void ledsInitialize() {
-    firstPosition = &display[0].r;
-    lastPosition = &display[NUMBER_OF_PIXELS - 1].b;
-    position = firstPosition;
-    mask = 0b10000000;
+    out = start;
+    byteCounter = 0;
     state = RUN;
-    nn = 0;
 }
 
 int ledsGetPWMDutyCycle() {
+    static unsigned char value;
     if (state == RESET) {
-        resetCounter++;
-        if (resetCounter >= NUMBER_OF_RESET_BITS) {
-            position = firstPosition;
+        if (++resetCounter >= NUMBER_OF_RESET_BITS) {
+            out = start;
+            byteCounter = 0;
             state = RUN;
         }
         return PWM_DC_FOR_RESET;
     }
-
-    char value = *position & mask;
-    mask >>= 1;
-    if (mask == 0) {
-        position++;
-        if (position > lastPosition) {
-            resetCounter = 0;
+    if (--byteCounter <= 0) {
+        byteCounter = 8;
+        value = *out;
+        if (++out > end) {
             state = RESET;
+            resetCounter = 1;
+            return 0;
         }
-        mask = 0b10000000;
     }
 
-    if (value == 0) {
+    unsigned char bitValue = value & MASK;
+    value <<= 1;
+
+    if (bitValue == 0) {
         return PWM_DC_FOR_0;
     }
     return PWM_DC_FOR_1;
@@ -204,7 +205,7 @@ void leds_can_set_position_between_2_and_3() {
 // stopwatch to measure the execution time.
 // A good solution should spend less than 3500 cycles executing the
 // complete for loop.
-// #define PERFORMANCE
+#define PERFORMANCE
 #ifdef PERFORMANCE
 void leds_have_good_performance() {
     ledsInitialize();
