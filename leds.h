@@ -2,7 +2,11 @@
 #define	LEDS_H
 
 #define NUMBER_OF_RESET_BITS 50
+
+#define NUMBER_OF_COLORS_PER_PIXEL 3
 #define NUMBER_OF_PIXELS 5
+#define NUMBER_OF_LEDS NUMBER_OF_PIXELS * NUMBER_OF_COLORS_PER_PIXEL
+#define NUMBER_OF_BITS NUMBER_OF_LEDS * 8
 
 typedef struct {
     unsigned char r;

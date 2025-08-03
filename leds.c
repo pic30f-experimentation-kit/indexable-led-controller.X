@@ -3,58 +3,42 @@
 #include "peripheral-pwm.h"
 #include "test.h"
 
+typedef union {
+    int counter;
+    struct {
+        unsigned int bitNumber: 3;
+        unsigned int pixelNumber: 13;
+    };
+} X;
+
+static X x;
 static Display display;
-
-typedef enum {
-    RUN,
-    RESET
-} LedsEmissionState;
-
-static unsigned char *start = (unsigned char*) &display;
-static unsigned char *end = (unsigned char*) &display[NUMBER_OF_PIXELS];
-
-static LedsEmissionState state;
-static int resetCounter;
-
-static unsigned char *out;
-static unsigned char outValue;
-static int outValueByteCounter;
-
-#define MASK 0b10000000
+static unsigned char * leds = (unsigned char *) display;
 
 void ledsInitialize() {
-    out = start;
-    outValueByteCounter = 0;
-    state = RUN;
+    x.counter = 0;
 }
 
 int ledsGetPWMDutyCycle() {
-    if (state == RESET) {
-        resetCounter++;
-        if (resetCounter >= NUMBER_OF_RESET_BITS) {
-            out = start;
-            outValueByteCounter = 0;
-            state = RUN;
-        }
+    if (x.counter < 0) {
+        x.counter++;
         return PWM_DC_FOR_RESET;
     }
-    outValueByteCounter--;
-    if (outValueByteCounter <= 0) {
-        outValueByteCounter = 8;
-        outValue = *out++;
-        if (out > end) {
-            state = RESET;
-            resetCounter = 1;
-            return 0;
-        }
+    
+    unsigned char a = leds[x.pixelNumber];
+    a <<= x.bitNumber;
+    a &= 0b10000000;
+    x.counter++;
+
+    if (x.counter >= NUMBER_OF_BITS) {
+        x.counter = - NUMBER_OF_RESET_BITS;
     }
 
-    if (outValue & MASK) {
-        outValue <<= 1;
+    if (a) {
         return PWM_DC_FOR_1;
+    } else {
+        return PWM_DC_FOR_0;
     }
-    outValue <<= 1;
-    return PWM_DC_FOR_0;        
 }
 
 void ledsSetPosition(int position) {
@@ -84,7 +68,28 @@ void ledsSetPosition(int position) {
 
 #ifdef TEST
 #include <stdio.h>
+void leds_has_a_good_x() {
+    X x;
+    x.counter = 0;
+    assertZero("LED_X0B", x.bitNumber);
+    assertZero("LED_X0L", x.pixelNumber);
+    
+    x.counter = 1;
+    assertEquals("LED_X1B", x.bitNumber, 1);
+    assertEquals("LED_X1L", x.pixelNumber, 0);
 
+    x.counter = 7;
+    assertEquals("LED_X7B", x.bitNumber, 7);
+    assertEquals("LED_X7L", x.pixelNumber, 0);
+
+    x.counter = 8;
+    assertEquals("LED_X8B", x.bitNumber, 0);
+    assertEquals("LED_X8L", x.pixelNumber, 1);
+
+    x.counter = 78;
+    assertEquals("LED_X88B", x.bitNumber, 6);
+    assertEquals("LED_X88L", x.pixelNumber, 9);
+}
 void leds_can_provide_duty_cycle_for_the_first_pixel() {
     ledsInitialize();
     display[0].r = 0b10101010;
@@ -226,6 +231,7 @@ void leds_have_good_performance() {
 #endif
 
 void testLeds() {
+    leds_has_a_good_x();
     leds_can_provide_duty_cycle_for_the_first_pixel();
     leds_can_provide_duty_cycle_for_all_displays();
     leds_can_provide_duty_cycle_for_last_pixel_then_reset_then_first_pixel();
