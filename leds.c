@@ -3,43 +3,14 @@
 #include "peripheral-pwm.h"
 #include "test.h"
 
-typedef union {
-    int counter;
-    struct {
-        unsigned int bitNumber: 3;
-        unsigned int pixelNumber: 13;
-    };
-} X;
-
-static X x;
-static Display display;
-static unsigned char * leds = (unsigned char *) display;
+int ledsInternalCounter;
+Display display;
 
 void ledsInitialize() {
-    x.counter = 0;
+    ledsInternalCounter = 0;
 }
 
-int ledsGetPWMDutyCycle() {
-    if (x.counter < 0) {
-        x.counter++;
-        return PWM_DC_FOR_RESET;
-    }
-    
-    unsigned char a = leds[x.pixelNumber];
-    a <<= x.bitNumber;
-    a &= 0b10000000;
-    x.counter++;
-
-    if (x.counter >= NUMBER_OF_BITS) {
-        x.counter = - NUMBER_OF_RESET_BITS;
-    }
-
-    if (a) {
-        return PWM_DC_FOR_1;
-    } else {
-        return PWM_DC_FOR_0;
-    }
-}
+extern int ledsGetPWMDutyCycle();
 
 void ledsSetPosition(int position) {
     float interval = (float) position;
@@ -68,28 +39,7 @@ void ledsSetPosition(int position) {
 
 #ifdef TEST
 #include <stdio.h>
-void leds_has_a_good_x() {
-    X x;
-    x.counter = 0;
-    assertZero("LED_X0B", x.bitNumber);
-    assertZero("LED_X0L", x.pixelNumber);
-    
-    x.counter = 1;
-    assertEquals("LED_X1B", x.bitNumber, 1);
-    assertEquals("LED_X1L", x.pixelNumber, 0);
 
-    x.counter = 7;
-    assertEquals("LED_X7B", x.bitNumber, 7);
-    assertEquals("LED_X7L", x.pixelNumber, 0);
-
-    x.counter = 8;
-    assertEquals("LED_X8B", x.bitNumber, 0);
-    assertEquals("LED_X8L", x.pixelNumber, 1);
-
-    x.counter = 78;
-    assertEquals("LED_X88B", x.bitNumber, 6);
-    assertEquals("LED_X88L", x.pixelNumber, 9);
-}
 void leds_can_provide_duty_cycle_for_the_first_pixel() {
     ledsInitialize();
     display[0].r = 0b10101010;
@@ -231,7 +181,6 @@ void leds_have_good_performance() {
 #endif
 
 void testLeds() {
-    leds_has_a_good_x();
     leds_can_provide_duty_cycle_for_the_first_pixel();
     leds_can_provide_duty_cycle_for_all_displays();
     leds_can_provide_duty_cycle_for_last_pixel_then_reset_then_first_pixel();
