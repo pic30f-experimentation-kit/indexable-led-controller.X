@@ -6,8 +6,8 @@
     .global _ledsGetPWMDutyCycle
     
 _ledsGetPWMDutyCycle:
-    ; Load the counter
-    mov	    _ledsInternalCounter, W0
+    ; Increment and load the counter
+    inc	    _ledsInternalCounter, WREG	; WREG is alias for W0.
     
     ; If counter is over all lamps and pixels...
     mov	    #NUMBER_OF_BITS, W1
@@ -15,9 +15,8 @@ _ledsGetPWMDutyCycle:
     bra	    GE, RESET ; ... it's reset time.
     
 ACTIVE:
-    ; Increment the counter...
-    inc	    W0, W3
-    mov	    W3, _ledsInternalCounter ; ... and save it back.
+    ; Save back the counter:
+    mov	    WREG, _ledsInternalCounter ; ... and save it back.
     
     ; Compute the current pixel:
     asr	    W0, #3, W1
@@ -40,14 +39,12 @@ ACTIVE_ZERO:
     retlw   #PWM_DC_FOR_0, W0    ; Return the corresponding value;
 
 RESET:
-    inc	    W0, W0           ; Increment the counter.
-    
     ; If couter is still in reset time...
-    add	    #(NUMBER_OF_RESET_BITS - 1), W1         ; 120 + 50 for large reset time
+    add	    #(NUMBER_OF_RESET_BITS - 2), W1
     cp	    W0, W1
-    bra	    LE, RESET_EXIT   ; 
+    bra	    LE, RESET_EXIT   ; ... keep counting.
     
-    ; End of reset time...
+    ; If reset time is over...
     mov	    #0, W0	     ; ... put back the counter to zero
 
 RESET_EXIT:

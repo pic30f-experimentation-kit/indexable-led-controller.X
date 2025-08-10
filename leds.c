@@ -7,7 +7,7 @@ int ledsInternalCounter;
 Display display;
 
 void ledsInitialize() {
-    ledsInternalCounter = 0;
+    ledsInternalCounter = -1;
 }
 
 extern int ledsGetPWMDutyCycle();
