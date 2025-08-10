@@ -116,6 +116,10 @@ void leds_can_provide_duty_cycle_for_last_pixel_then_reset_then_first_pixel() {
             break;
         }
     }
+
+    display[0].r = 0b10000000;
+    display[0].g = 0;
+    display[0].b = 0;
     
     assertEquals("LED_CC", ledsGetPWMDutyCycle(), PWM_DC_FOR_1);
 }
