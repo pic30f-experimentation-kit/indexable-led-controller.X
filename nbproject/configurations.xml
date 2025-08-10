@@ -10,6 +10,7 @@
       <itemPath>peripheral-adc.h</itemPath>
       <itemPath>peripheral-pwm.h</itemPath>
       <itemPath>shared.h</itemPath>
+      <itemPath>../servo-controller.X/deleteme.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

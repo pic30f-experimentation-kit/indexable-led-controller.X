@@ -7,10 +7,13 @@
 #define PWM_DC_FOR_0     10    // ... this is 0.35µs
 #define PWM_DC_FOR_RESET 0     // During the reset, no DC at all.
 
+#ifndef __ASSEMBLER__
 /**
  * Initializes PWM peripheral.
  */
 void initializePWM();  
+
+#endif /* __ASSEMBLER__ */
 
 #endif /* PERIPHERAL_PWM_H */
 
