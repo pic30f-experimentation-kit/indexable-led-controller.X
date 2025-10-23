@@ -3,19 +3,38 @@
 #include "peripheral-pwm.h"
 #include "test.h"
 
-static Display display;
+int ledsInternalCounter;
+Display display;
 
 void ledsInitialize() {
-    // TODO
+    ledsInternalCounter = -1;
 }
 
-int ledsGetPWMDutyCycle() {
-    // TODO
-    return 0;
-}
+extern int ledsGetPWMDutyCycle();
 
 void ledsSetPosition(int position) {
-    // TODO
+    float interval = (float) position;
+    interval /= 4096;
+    interval *= NUMBER_OF_PIXELS - 1;
+
+    int digitA = (int) interval;
+    int digitB = digitA + 1;
+
+    interval -= digitA;
+    interval *= 255;
+
+    int weightB = (int) interval;
+    int weightA = 255 - weightB;
+
+    for(int n = 0; n < NUMBER_OF_PIXELS; n++) {
+        if (n == digitA) {
+            display[n].r = weightA;
+        } else if (n == digitB) {
+            display[n].r = weightB;
+        } else {
+            display[n].r = 0;
+        }
+    }
 }
 
 #ifdef TEST
@@ -97,6 +116,10 @@ void leds_can_provide_duty_cycle_for_last_pixel_then_reset_then_first_pixel() {
             break;
         }
     }
+
+    display[0].r = 0b10000000;
+    display[0].g = 0;
+    display[0].b = 0;
     
     assertEquals("LED_CC", ledsGetPWMDutyCycle(), PWM_DC_FOR_1);
 }
@@ -142,7 +165,7 @@ void leds_can_set_position_between_2_and_3() {
 // stopwatch to measure the execution time.
 // A good solution should spend less than 3500 cycles executing the
 // complete for loop.
-// #define PERFORMANCE
+#define PERFORMANCE
 #ifdef PERFORMANCE
 void leds_have_good_performance() {
     ledsInitialize();
