@@ -1,7 +1,7 @@
 #ifndef LEDS_H
 #define	LEDS_H
 
-#define NUMBER_OF_RESET_BITS 50
+#define NUMBER_OF_RESET_BITS 500
 
 #define NUMBER_OF_COLORS_PER_PIXEL 3
 #define NUMBER_OF_PIXELS 5
